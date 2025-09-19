@@ -133,8 +133,8 @@ export function ZoomPanPinchViewer() {
               draggable={false}
             />
           </TransformComponent>
-          <div className="bg-card rounded-lg p-2 flex-shrink-0">
-            <h3 className="text-sm font-medium text-card-foreground mb-2">Image Gallery</h3>
+          <div className="bg-card rounded-lg  flex-shrink-0">
+            <h3 className="text-sm font-medium text-card-foreground mb-1">Image Gallery</h3>
             <div className="flex gap-2 overflow-x-auto">
               {imageGallery.map((image) => (
                 <div
