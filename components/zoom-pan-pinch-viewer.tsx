@@ -127,7 +127,7 @@ export function ZoomPanPinchViewer() {
             <Image
               src={currentImage.url || "/placeholder.svg"}
               alt={currentImage.name}
-              width={800}
+              width={300}
               height={600}
               className="w-auto h-auto max-w-full max-h-full object-contain select-none"
               draggable={false}
