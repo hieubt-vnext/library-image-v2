@@ -129,7 +129,7 @@ export function ZoomPanPinchViewer() {
               alt={currentImage.name}
               width={800}
               height={600}
-              className="w-full h-full object-cover select-none"
+              className="max-w-full max-h-full object-contain select-none"
               draggable={false}
             />
           </TransformComponent>
