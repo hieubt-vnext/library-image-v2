@@ -111,11 +111,10 @@ export function ZoomPanPinchViewer() {
   }, [touchStart, touchEnd, currentImageId, transformState.scale, handleImageSelect])
 
   return (
-    <div className="h-full flex flex-col space-y-4">
+    <div className="h-full flex flex-col space-y-2">
       {/* Main Image Viewer */}
       <div
         className="relative rounded-lg overflow-hidden flex-1 min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center"
-        style={{ aspectRatio: "3/4" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -162,10 +161,8 @@ export function ZoomPanPinchViewer() {
       </div>
 
       {/* Image Gallery & Mini Maps */}
-      <div className="bg-card rounded-lg p-4 flex-shrink-0">
-        {" "}
-        {/* removed border border-border */}
-        <h3 className="text-sm font-medium text-card-foreground mb-4">Image Gallery</h3>
+      <div className="bg-card rounded-lg p-2 flex-shrink-0">
+        <h3 className="text-sm font-medium text-card-foreground mb-2">Image Gallery</h3>
         <MiniMap
           images={imageGallery}
           currentImageId={currentImageId}
