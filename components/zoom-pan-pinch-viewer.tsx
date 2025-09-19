@@ -27,6 +27,10 @@ export function ZoomPanPinchViewer() {
   // Pan/drag state for image navigation
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null)
   const [isPanning, setIsPanning] = useState(false)
+  
+  // Animation state
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null)
 
   const transformRef = useRef<ReactZoomPanPinchRef>(null)
 
@@ -37,6 +41,24 @@ export function ZoomPanPinchViewer() {
       transformRef.current.resetTransform()
     }
   }, [])
+
+  const handleImageSelectWithAnimation = useCallback((imageId: number, direction: 'left' | 'right') => {
+    if (isAnimating) return // Prevent multiple animations
+    
+    setIsAnimating(true)
+    setSlideDirection(direction)
+    
+    // Start animation
+    setTimeout(() => {
+      handleImageSelect(imageId)
+      
+      // Reset animation state after transition
+      setTimeout(() => {
+        setIsAnimating(false)
+        setSlideDirection(null)
+      }, 300) // Match CSS transition duration
+    }, 150) // Half of transition for slide out effect
+  }, [isAnimating, handleImageSelect])
 
   // Pan event handlers for image navigation using react-zoom-pan-pinch callbacks
   const handlePanningStart = useCallback((ref: ReactZoomPanPinchRef, event: TouchEvent | MouseEvent) => {
@@ -74,18 +96,18 @@ export function ZoomPanPinchViewer() {
         // Swipe left - go to next image
         const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
         const nextIndex = (currentIndex + 1) % imageGallery.length
-        handleImageSelect(imageGallery[nextIndex].id)
+        handleImageSelectWithAnimation(imageGallery[nextIndex].id, 'left')
       } else if (isRightSwipe) {
         // Swipe right - go to previous image
         const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
         const prevIndex = currentIndex === 0 ? imageGallery.length - 1 : currentIndex - 1
-        handleImageSelect(imageGallery[prevIndex].id)
+        handleImageSelectWithAnimation(imageGallery[prevIndex].id, 'right')
       }
     }
 
     setIsPanning(false)
     setPanStart(null)
-  }, [isPanning, panStart, currentImageId, handleImageSelect])
+  }, [isPanning, panStart, currentImageId, handleImageSelectWithAnimation])
 
   return (
     <div className="h-full flex flex-col space-y-2">
@@ -111,14 +133,24 @@ export function ZoomPanPinchViewer() {
             wrapperClass="w-full h-full"
             contentClass="w-full h-full flex items-center justify-center"
           >
-            <Image
-              src={currentImage.url || "/placeholder.svg"}
-              alt={currentImage.name}
-              width={380}
-              height={600}
-              className="w-auto h-auto max-w-full max-h-full object-contain select-none"
-              draggable={false}
-            />
+            <div 
+              className={`transition-all duration-300 ease-in-out ${
+                isAnimating 
+                  ? slideDirection === 'left' 
+                    ? 'transform -translate-x-full opacity-0' 
+                    : 'transform translate-x-full opacity-0'
+                  : 'transform translate-x-0 opacity-100'
+              }`}
+            >
+              <Image
+                src={currentImage.url || "/placeholder.svg"}
+                alt={currentImage.name}
+                width={380}
+                height={600}
+                className="w-auto h-auto max-w-full max-h-full object-contain select-none"
+                draggable={false}
+              />
+            </div>
           </TransformComponent>
           <div className="bg-card rounded-lg mt-5 flex-shrink-0">
         
@@ -131,7 +163,13 @@ export function ZoomPanPinchViewer() {
                       ? "border-primary ring-2 ring-primary/20"
                       : "border-border hover:border-primary/50"
                   }`}
-                  onClick={() => handleImageSelect(image.id)}
+                  onClick={() => {
+                    // Determine direction based on current position
+                    const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
+                    const targetIndex = imageGallery.findIndex((img) => img.id === image.id)
+                    const direction = targetIndex > currentIndex ? 'left' : 'right'
+                    handleImageSelectWithAnimation(image.id, direction)
+                  }}
                 >
                   {currentImageId === image.id ? (
                   <MiniMap width={200} height={200}>
