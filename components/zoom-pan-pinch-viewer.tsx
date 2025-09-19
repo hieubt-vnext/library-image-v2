@@ -21,31 +21,14 @@ const imageGallery = [
 ]
 
 export function ZoomPanPinchViewer() {
-  const [transformState, setTransformState] = useState({
-    scale: 1,
-    positionX: 0,
-    positionY: 0,
-  })
-
   const [currentImageId, setCurrentImageId] = useState(1)
   const currentImage = imageGallery.find((img) => img.id === currentImageId) || imageGallery[0]
 
-  // Touch/swipe state
-  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null)
-  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null)
+  // Pan/drag state for image navigation
+  const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null)
+  const [isPanning, setIsPanning] = useState(false)
 
   const transformRef = useRef<ReactZoomPanPinchRef>(null)
-
-  const handleTransform = useCallback((ref: ReactZoomPanPinchRef) => {
-    const { state } = ref
-    setTransformState({
-      scale: state.scale,
-      positionX: state.positionX,
-      positionY: state.positionY,
-    })
-  }, [])
-
-
 
   const handleImageSelect = useCallback((imageId: number) => {
     setCurrentImageId(imageId)
@@ -55,56 +38,54 @@ export function ZoomPanPinchViewer() {
     }
   }, [])
 
-  // Touch event handlers for swipe navigation
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    setTouchEnd(null)
-    setTouchStart({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY,
-    })
+  // Pan event handlers for image navigation using react-zoom-pan-pinch callbacks
+  const handlePanningStart = useCallback((ref: ReactZoomPanPinchRef, event: TouchEvent | MouseEvent) => {
+    setIsPanning(true)
+    const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
+    const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
+    
+    setPanStart({ x: clientX, y: clientY })
   }, [])
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    setTouchEnd({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY,
-    })
-  }, [])
+  const handlePanningStop = useCallback((ref: ReactZoomPanPinchRef, event: TouchEvent | MouseEvent) => {
+    if (!isPanning || !panStart) {
+      setIsPanning(false)
+      setPanStart(null)
+      return
+    }
 
-  const handleTouchEnd = useCallback(() => {
-    if (!touchStart || !touchEnd) return
+    const clientX = 'changedTouches' in event ? event.changedTouches[0].clientX : event.clientX
+    const clientY = 'changedTouches' in event ? event.changedTouches[0].clientY : event.clientY
 
-    const deltaX = touchStart.x - touchEnd.x
-    const deltaY = touchStart.y - touchEnd.y
+    const deltaX = panStart.x - clientX
+    const deltaY = panStart.y - clientY
     const isLeftSwipe = deltaX > 50
     const isRightSwipe = deltaX < -50
     const isVerticalSwipe = Math.abs(deltaY) > Math.abs(deltaX)
 
-    // Only handle horizontal swipes, allow swipe even when zoomed in
-    if (isVerticalSwipe) return
-
-    if (isLeftSwipe) {
-      // Swipe left - go to next image
-      const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
-      const nextIndex = (currentIndex + 1) % imageGallery.length
-      handleImageSelect(imageGallery[nextIndex].id)
-    } else if (isRightSwipe) {
-      // Swipe right - go to previous image
-      const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
-      const prevIndex = currentIndex === 0 ? imageGallery.length - 1 : currentIndex - 1
-      handleImageSelect(imageGallery[prevIndex].id)
+    // Only handle horizontal swipes - allow swipe even when zoomed
+    if (!isVerticalSwipe) {
+      if (isLeftSwipe) {
+        // Swipe left - go to next image
+        const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
+        const nextIndex = (currentIndex + 1) % imageGallery.length
+        handleImageSelect(imageGallery[nextIndex].id)
+      } else if (isRightSwipe) {
+        // Swipe right - go to previous image
+        const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
+        const prevIndex = currentIndex === 0 ? imageGallery.length - 1 : currentIndex - 1
+        handleImageSelect(imageGallery[prevIndex].id)
+      }
     }
-  }, [touchStart, touchEnd, currentImageId, handleImageSelect])
+
+    setIsPanning(false)
+    setPanStart(null)
+  }, [isPanning, panStart, currentImageId, handleImageSelect])
 
   return (
     <div className="h-full flex flex-col space-y-2">
       {/* Main Image Viewer */}
-      <div
-        className="relative flex-col rounded-lg  min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
+      <div className="relative flex-col rounded-lg  min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center">
         <TransformWrapper
           ref={transformRef}
           initialScale={1} // reset initial scale to 1 (100%)
@@ -114,10 +95,11 @@ export function ZoomPanPinchViewer() {
           wheel={{ step: 0.1 }}
           pinch={{ step: 5 }}
           doubleClick={{ mode: "reset" }}
-          onTransformed={handleTransform}
+          onPanningStart={handlePanningStart}
+          onPanningStop={handlePanningStop}
           limitToBounds={true}
           centerZoomedOut={true}
-          panning={{ disabled: transformState.scale <= 1 }} // updated panning threshold to match new minScale
+          panning={{ disabled: false }} // Enable panning for both zoom and navigation
           key={currentImageId} // Force re-render when image changes
         >
           <TransformComponent
@@ -154,7 +136,7 @@ export function ZoomPanPinchViewer() {
                       width={120}
                       height={200}
                       className="w-full h-full object-cover select-none"
-                      draggable={false}
+                      draggable={true}
                     />
                   </MiniMap>
                   ) : (
