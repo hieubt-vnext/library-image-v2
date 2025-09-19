@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useMemo } from "react"
 import { TransformWrapper, TransformComponent, MiniMap, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch"
 
 import Image from "next/image"
@@ -22,7 +22,12 @@ const imageGallery = [
 
 export function ZoomPanPinchViewer() {
   const [currentImageId, setCurrentImageId] = useState(1)
-  const currentImage = imageGallery.find((img) => img.id === currentImageId) || imageGallery[0]
+  
+  // Memoize current image to prevent unnecessary recalculations
+  const currentImage = useMemo(() => 
+    imageGallery.find((img) => img.id === currentImageId) || imageGallery[0],
+    [currentImageId]
+  )
 
   // Pan/drag state for image navigation
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null)
@@ -36,7 +41,7 @@ export function ZoomPanPinchViewer() {
 
   const handleImageSelect = useCallback((imageId: number) => {
     setCurrentImageId(imageId)
-    // Reset transform when switching images
+    // Optional: Reset transform when switching images (comment out if you want to keep zoom/pan state)
     if (transformRef.current) {
       transformRef.current.resetTransform()
     }
@@ -109,6 +114,23 @@ export function ZoomPanPinchViewer() {
     setPanStart(null)
   }, [isPanning, panStart, currentImageId, handleImageSelectWithAnimation])
 
+  // Memoize thumbnail items to prevent unnecessary re-renders
+  const thumbnailItems = useMemo(() => 
+    imageGallery.map((image) => ({
+      ...image,
+      isActive: currentImageId === image.id
+    })),
+    [currentImageId]
+  )
+
+  // Memoize thumbnail click handler
+  const handleThumbnailClick = useCallback((imageId: number) => {
+    const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
+    const targetIndex = imageGallery.findIndex((img) => img.id === imageId)
+    const direction = targetIndex > currentIndex ? 'left' : 'right'
+    handleImageSelectWithAnimation(imageId, direction)
+  }, [currentImageId, handleImageSelectWithAnimation])
+
   return (
     <div className="h-full flex flex-col space-y-2">
       {/* Main Image Viewer */}
@@ -127,7 +149,6 @@ export function ZoomPanPinchViewer() {
           limitToBounds={true}
           centerZoomedOut={true}
           panning={{ disabled: false }} // Enable panning for both zoom and navigation
-          key={currentImageId} // Force re-render when image changes
         >
           <TransformComponent
             wrapperClass="w-full h-full"
@@ -155,23 +176,17 @@ export function ZoomPanPinchViewer() {
           <div className="bg-card rounded-lg mt-5 flex-shrink-0">
         
             <div className="flex gap-2 overflow-x-auto">
-              {imageGallery.map((image) => (
+              {thumbnailItems.map((image) => (
                 <div
                   key={image.id}
                   className={`relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                    currentImageId === image.id
+                    image.isActive
                       ? "border-primary ring-2 ring-primary/20"
                       : "border-border hover:border-primary/50"
                   }`}
-                  onClick={() => {
-                    // Determine direction based on current position
-                    const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
-                    const targetIndex = imageGallery.findIndex((img) => img.id === image.id)
-                    const direction = targetIndex > currentIndex ? 'left' : 'right'
-                    handleImageSelectWithAnimation(image.id, direction)
-                  }}
+                  onClick={() => handleThumbnailClick(image.id)}
                 >
-                  {currentImageId === image.id ? (
+                  {image.isActive ? (
                   <MiniMap width={200} height={200}>
                     <Image
                       src={image.url || "/placeholder.svg"}
@@ -192,7 +207,7 @@ export function ZoomPanPinchViewer() {
                       draggable={false}
                     />
                   )}
-                  {currentImageId === image.id && (
+                  {image.isActive && (
                     <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
                       <div className="w-2 h-2 bg-primary rounded-full"></div>
                     </div>
