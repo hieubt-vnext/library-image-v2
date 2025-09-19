@@ -125,6 +125,11 @@ export function ZoomPanPinchViewer() {
 
   // Memoize thumbnail click handler
   const handleThumbnailClick = useCallback((imageId: number) => {
+    // Prevent clicking on already selected item
+    if (imageId === currentImageId) {
+      return
+    }
+    
     const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
     const targetIndex = imageGallery.findIndex((img) => img.id === imageId)
     const direction = targetIndex > currentIndex ? 'left' : 'right'
@@ -179,10 +184,10 @@ export function ZoomPanPinchViewer() {
               {thumbnailItems.map((image) => (
                 <div
                   key={image.id}
-                  className={`relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                  className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
                     image.isActive
-                      ? "border-primary ring-2 ring-primary/20"
-                      : "border-border hover:border-primary/50"
+                      ? "border-primary ring-2 ring-primary/20 cursor-default"
+                      : "border-border hover:border-primary/50 cursor-pointer"
                   }`}
                   onClick={() => handleThumbnailClick(image.id)}
                 >
