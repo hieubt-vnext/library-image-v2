@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState, useCallback } from "react"
 
 interface ImageData {
   id: number
@@ -34,75 +34,28 @@ export function MiniMap({
   const [loadedImages, setLoadedImages] = useState<{ [key: number]: boolean }>({})
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 })
 
-  const miniMapWidth = 100
-  const miniMapHeight = 70
-
-  useEffect(() => {
-    const updateContainerDimensions = () => {
-      const maxWidth = Math.min(window.innerWidth * 0.9, 1024) // max-w-4xl equivalent
-      const containerWidth = maxWidth
-      const containerHeight = maxWidth * (3 / 4) // 4:3 aspect ratio
-
-      setContainerDimensions({ width: containerWidth, height: containerHeight })
+  // Calculate mini-map dimensions based on image dimensions
+  const getMiniMapDimensions = useCallback((imageId: number) => {
+    const dimensions = imageDimensions[imageId]
+    if (!dimensions) return { width: 200, height: 140 } // fallback dimensions
+    
+    const maxWidth = 250
+    const maxHeight = 180
+    const aspectRatio = dimensions.width / dimensions.height
+    
+    let width = maxWidth
+    let height = maxHeight
+    
+    if (aspectRatio > maxWidth / maxHeight) {
+      height = maxWidth / aspectRatio
+    } else {
+      width = maxHeight * aspectRatio
     }
+    
+    return { width: Math.round(width), height: Math.round(height) }
+  }, [imageDimensions])
 
-    updateContainerDimensions()
-    window.addEventListener("resize", updateContainerDimensions)
-
-    return () => window.removeEventListener("resize", updateContainerDimensions)
-  }, [])
-
-  useEffect(() => {
-    images.forEach((imageData) => {
-      const canvas = canvasRefs.current[imageData.id]
-      if (!canvas) return
-
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
-
-      const img = new Image()
-      img.crossOrigin = "anonymous"
-
-      img.onload = () => {
-        setImageDimensions((prev) => ({
-          ...prev,
-          [imageData.id]: { width: img.width, height: img.height },
-        }))
-        setLoadedImages((prev) => ({
-          ...prev,
-          [imageData.id]: true,
-        }))
-
-        // Clear canvas
-        ctx.clearRect(0, 0, miniMapWidth, miniMapHeight)
-
-        // Calculate aspect ratio and draw thumbnail
-        const aspectRatio = img.width / img.height
-        let drawWidth = miniMapWidth
-        let drawHeight = miniMapHeight
-
-        if (aspectRatio > miniMapWidth / miniMapHeight) {
-          drawHeight = miniMapWidth / aspectRatio
-        } else {
-          drawWidth = miniMapHeight * aspectRatio
-        }
-
-        const offsetX = (miniMapWidth - drawWidth) / 2
-        const offsetY = (miniMapHeight - drawHeight) / 2
-
-        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
-
-        if (imageData.id === currentImageId && scale > 1) {
-          drawViewport(ctx, drawWidth, drawHeight, offsetX, offsetY, imageData.id)
-        }
-      }
-
-      // Use thumbnail for gallery display
-      img.src = imageData.thumbnail
-    })
-  }, [images, currentImageId, scale, positionX, positionY, containerDimensions])
-
-  const drawViewport = (
+  const drawViewport = useCallback((
     ctx: CanvasRenderingContext2D,
     drawWidth: number,
     drawHeight: number,
@@ -183,7 +136,79 @@ export function MiniMap({
         Math.min(clampedHeight, drawHeight),
       )
     }
-  }
+  }, [imageDimensions, loadedImages, containerDimensions, scale, positionX, positionY])
+
+  useEffect(() => {
+    const updateContainerDimensions = () => {
+      const maxWidth = Math.min(window.innerWidth * 0.9, 1024) // max-w-4xl equivalent
+      const containerWidth = maxWidth
+      const containerHeight = maxWidth * (3 / 4) // 4:3 aspect ratio
+
+      setContainerDimensions({ width: containerWidth, height: containerHeight })
+    }
+
+    updateContainerDimensions()
+    window.addEventListener("resize", updateContainerDimensions)
+
+    return () => window.removeEventListener("resize", updateContainerDimensions)
+  }, [])
+
+  useEffect(() => {
+    images.forEach((imageData) => {
+      const canvas = canvasRefs.current[imageData.id]
+      if (!canvas) return
+
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return
+
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+
+      img.onload = () => {
+        setImageDimensions((prev) => ({
+          ...prev,
+          [imageData.id]: { width: img.width, height: img.height },
+        }))
+        setLoadedImages((prev) => ({
+          ...prev,
+          [imageData.id]: true,
+        }))
+
+        // Get dynamic mini-map dimensions
+        const { width: miniMapWidth, height: miniMapHeight } = getMiniMapDimensions(imageData.id)
+        
+        // Update canvas size
+        canvas.width = miniMapWidth
+        canvas.height = miniMapHeight
+
+        // Clear canvas
+        ctx.clearRect(0, 0, miniMapWidth, miniMapHeight)
+
+        // Calculate aspect ratio and draw thumbnail
+        const aspectRatio = img.width / img.height
+        let drawWidth = miniMapWidth
+        let drawHeight = miniMapHeight
+
+        if (aspectRatio > miniMapWidth / miniMapHeight) {
+          drawHeight = miniMapWidth / aspectRatio
+        } else {
+          drawWidth = miniMapHeight * aspectRatio
+        }
+
+        const offsetX = (miniMapWidth - drawWidth) / 2
+        const offsetY = (miniMapHeight - drawHeight) / 2
+
+        ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight)
+
+        if (imageData.id === currentImageId && scale > 1) {
+          drawViewport(ctx, drawWidth, drawHeight, offsetX, offsetY, imageData.id)
+        }
+      }
+
+      // Use thumbnail for gallery display
+      img.src = imageData.thumbnail
+    })
+  }, [images, currentImageId, scale, positionX, positionY, containerDimensions, getMiniMapDimensions, drawViewport])
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>, imageData: ImageData) => {
     if (imageData.id !== currentImageId) {
@@ -201,6 +226,9 @@ export function MiniMap({
       const dimensions = imageDimensions[imageData.id]
       if (!dimensions || containerDimensions.width === 0) return
 
+      // Get dynamic mini-map dimensions
+      const { width: miniMapWidth, height: miniMapHeight } = getMiniMapDimensions(imageData.id)
+      
       // Convert click coordinates to image coordinates
       const aspectRatio = dimensions.width / dimensions.height
       let drawWidth = miniMapWidth
@@ -268,8 +296,8 @@ export function MiniMap({
               ref={(el) => {
                 canvasRefs.current[imageData.id] = el
               }}
-              width={miniMapWidth}
-              height={miniMapHeight}
+              width={getMiniMapDimensions(imageData.id).width}
+              height={getMiniMapDimensions(imageData.id).height}
               className="cursor-pointer transition-transform"
               onClick={(e) => handleCanvasClick(e, imageData)}
               onTouchStart={(e) => handleCanvasTouch(e, imageData)}

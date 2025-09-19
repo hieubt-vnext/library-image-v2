@@ -6,19 +6,17 @@ import { MiniMap } from "./mini-map"
 import Image from "next/image"
 
 const imageGallery = [
-
-
   {
-    id: 1 ,
-    name: "Menu 2",
-    url: "/image-2.png",
-    thumbnail: "/image-2.png",
+    id: 1,
+    name: "Menu 1",
+    url: "/image-4.png",
+    thumbnail: "/image-4.png",
   },
   {
     id: 2,
-    name: "Menu 3",
-    url: "/image-3.png",
-    thumbnail: "/image-3.png",
+    name: "Menu 2",
+    url: "/image-5.png",
+    thumbnail: "/image-5.png",
   }
 ]
 
