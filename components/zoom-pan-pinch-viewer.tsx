@@ -94,24 +94,14 @@ export function ZoomPanPinchViewer() {
     setPanStart(null)
   }, [isPanning, panStart, currentImageId, handleImageSelect])
 
-  // Memoize thumbnail items to prevent unnecessary re-renders
-  const thumbnailItems = useMemo(() => 
-    imageGallery.map((image) => ({
-      ...image,
-      isActive: currentImageId === image.id
-    })),
-    [currentImageId]
-  )
-
-  // Memoize thumbnail click handler
-  const handleThumbnailClick = useCallback((imageId: number) => {
+  const handleThumbnailClick = (imageId: number) => {
     // Prevent clicking on already selected item
     if (imageId === currentImageId) {
       return
     }
     
     handleImageSelect(imageId)
-  }, [currentImageId, handleImageSelect])
+  }
 
   return (
     <div className="h-full flex flex-col space-y-2">
@@ -147,30 +137,30 @@ export function ZoomPanPinchViewer() {
               />
             </div>
           </TransformComponent>
+          
           <div className="bg-card rounded-lg mt-5 flex-shrink-0">
-        
             <div className="flex gap-2 overflow-x-auto">
-              {thumbnailItems.map((image) => (
+              {imageGallery.map((image) => (
                 <div
                   key={image.id}
                   className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
-                    image.isActive
+                    currentImageId === image.id
                       ? "border-primary ring-2 ring-primary/20 cursor-default"
                       : "border-border hover:border-primary/50 cursor-pointer"
                   }`}
                   onClick={() => handleThumbnailClick(image.id)}
                 >
-                  {image.isActive ? (
-                  <MiniMap width={200} height={200}>
-                    <Image
-                      src={image.url || "/placeholder.svg"}
-                      alt={image.name}
-                      width={120}
-                      height={200}
-                      className="w-full h-full object-cover select-none"
-                      draggable={true}
-                    />
-                  </MiniMap>
+                  {currentImageId === image.id ? (
+                    <MiniMap width={200} height={200}>
+                      <Image
+                        src={image.url || "/placeholder.svg"}
+                        alt={image.name}
+                        width={120}
+                        height={200}
+                        className="w-full h-full object-cover select-none"
+                        draggable={false}
+                      />
+                    </MiniMap>
                   ) : (
                     <Image
                       src={image.thumbnail || image.url || "/placeholder.svg"}
@@ -181,7 +171,7 @@ export function ZoomPanPinchViewer() {
                       draggable={false}
                     />
                   )}
-                  {image.isActive && (
+                  {currentImageId === image.id && (
                     <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
                       <div className="w-2 h-2 bg-primary rounded-full"></div>
                     </div>
