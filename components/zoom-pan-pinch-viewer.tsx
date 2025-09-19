@@ -100,7 +100,7 @@ export function ZoomPanPinchViewer() {
     <div className="h-full flex flex-col space-y-2">
       {/* Main Image Viewer */}
       <div
-        className="relative flex-col rounded-lg flex-1 min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center"
+        className="relative flex-col rounded-lg  min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
