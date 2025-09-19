@@ -7,12 +7,19 @@ import Image from "next/image"
 
 const imageGallery = [
 
+
   {
-    id: 1,
-    name: "KFC Menu Vietnamese",
-    url: "/kfc-menu-vietnamese.png",
-    thumbnail: "/kfc-menu-vietnamese.png",
+    id: 1 ,
+    name: "Menu 2",
+    url: "/image-2.png",
+    thumbnail: "/image-2.png",
   },
+  {
+    id: 2,
+    name: "Menu 3",
+    url: "/image-3.png",
+    thumbnail: "/image-3.png",
+  }
 ]
 
 export function ZoomPanPinchViewer() {
@@ -24,6 +31,10 @@ export function ZoomPanPinchViewer() {
 
   const [currentImageId, setCurrentImageId] = useState(1)
   const currentImage = imageGallery.find((img) => img.id === currentImageId) || imageGallery[0]
+
+  // Touch/swipe state
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null)
+  const [touchEnd, setTouchEnd] = useState<{ x: number; y: number } | null>(null)
 
   const transformRef = useRef<ReactZoomPanPinchRef>(null)
 
@@ -58,12 +69,56 @@ export function ZoomPanPinchViewer() {
     }
   }, [])
 
+  // Touch event handlers for swipe navigation
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    setTouchEnd(null)
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    })
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    setTouchEnd({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY,
+    })
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStart || !touchEnd) return
+
+    const deltaX = touchStart.x - touchEnd.x
+    const deltaY = touchStart.y - touchEnd.y
+    const isLeftSwipe = deltaX > 50
+    const isRightSwipe = deltaX < -50
+    const isVerticalSwipe = Math.abs(deltaY) > Math.abs(deltaX)
+
+    // Only handle horizontal swipes when not zoomed in
+    if (isVerticalSwipe || transformState.scale > 1) return
+
+    if (isLeftSwipe) {
+      // Swipe left - go to next image
+      const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
+      const nextIndex = (currentIndex + 1) % imageGallery.length
+      handleImageSelect(imageGallery[nextIndex].id)
+    } else if (isRightSwipe) {
+      // Swipe right - go to previous image
+      const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
+      const prevIndex = currentIndex === 0 ? imageGallery.length - 1 : currentIndex - 1
+      handleImageSelect(imageGallery[prevIndex].id)
+    }
+  }, [touchStart, touchEnd, currentImageId, transformState.scale, handleImageSelect])
+
   return (
     <div className="h-full flex flex-col space-y-4">
       {/* Main Image Viewer */}
       <div
         className="relative rounded-lg overflow-hidden flex-1 min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center"
         style={{ aspectRatio: "3/4" }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <TransformWrapper
           ref={transformRef}
@@ -94,13 +149,23 @@ export function ZoomPanPinchViewer() {
             />
           </TransformComponent>
         </TransformWrapper>
+
+        {/* Navigation Arrows */}
+        
+
+        {/* Image Counter */}
+        {imageGallery.length > 1 && (
+          <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-10">
+            {imageGallery.findIndex((img) => img.id === currentImageId) + 1} / {imageGallery.length}
+          </div>
+        )}
       </div>
 
       {/* Image Gallery & Mini Maps */}
       <div className="bg-card rounded-lg p-4 flex-shrink-0">
         {" "}
         {/* removed border border-border */}
-        <h3 className="text-sm font-medium text-card-foreground mb-4">Image Gallery & Mini Maps</h3>
+        <h3 className="text-sm font-medium text-card-foreground mb-4">Image Gallery</h3>
         <MiniMap
           images={imageGallery}
           currentImageId={currentImageId}
