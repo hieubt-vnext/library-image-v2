@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
-import { TransformWrapper, TransformComponent, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch"
-import { MiniMap } from "./mini-map"
+import { TransformWrapper, TransformComponent, MiniMap, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch"
+
 import Image from "next/image"
 
 const imageGallery = [
@@ -45,19 +45,7 @@ export function ZoomPanPinchViewer() {
     })
   }, [])
 
-  const handleMiniMapClick = useCallback(
-    (x: number, y: number) => {
-      if (transformRef.current) {
-        
-        // Convert mini map coordinates to main view coordinates
-        const targetX = -x * transformState.scale
-        const targetY = -y * transformState.scale
 
-        transformRef.current.setTransform(targetX, targetY, transformState.scale, 200)
-      }
-    },
-    [transformState.scale],
-  )
 
   const handleImageSelect = useCallback((imageId: number) => {
     setCurrentImageId(imageId)
@@ -112,7 +100,7 @@ export function ZoomPanPinchViewer() {
     <div className="h-full flex flex-col space-y-2">
       {/* Main Image Viewer */}
       <div
-        className="relative rounded-lg overflow-hidden flex-1 min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center"
+        className="relative  flex-col rounded-lg overflow-hidden flex-1 min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -145,31 +133,20 @@ export function ZoomPanPinchViewer() {
               draggable={false}
             />
           </TransformComponent>
-        </TransformWrapper>
-
-        {/* Navigation Arrows */}
-        
-
-        {/* Image Counter */}
-        {imageGallery.length > 1 && (
-          <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm z-10">
-            {imageGallery.findIndex((img) => img.id === currentImageId) + 1} / {imageGallery.length}
-          </div>
-        )}
-      </div>
-
-      {/* Image Gallery & Mini Maps */}
-      <div className="bg-card rounded-lg p-2 flex-shrink-0">
+          <div className="bg-card rounded-lg p-2 flex-shrink-0">
         <h3 className="text-sm font-medium text-card-foreground mb-2">Image Gallery</h3>
-        <MiniMap
-          images={imageGallery}
-          currentImageId={currentImageId}
-          scale={transformState.scale}
-          positionX={transformState.positionX}
-          positionY={transformState.positionY}
-          onImageSelect={handleImageSelect}
-          onPositionChange={handleMiniMapClick}
-        />
+        <MiniMap width={200}>
+            <Image
+              src={currentImage.url || "/placeholder.svg"}
+              alt={currentImage.name}
+              width={200}
+              height={150}
+              className="w-full h-full object-cover select-none"
+              draggable={false}
+            />
+          </MiniMap>
+      </div>
+        </TransformWrapper>
       </div>
     </div>
   )
