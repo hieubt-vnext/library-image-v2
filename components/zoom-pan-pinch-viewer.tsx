@@ -33,9 +33,6 @@ export function ZoomPanPinchViewer() {
   const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null)
   const [isPanning, setIsPanning] = useState(false)
   
-  // Animation state
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null)
 
   const transformRef = useRef<ReactZoomPanPinchRef>(null)
 
@@ -47,23 +44,6 @@ export function ZoomPanPinchViewer() {
     }
   }, [])
 
-  const handleImageSelectWithAnimation = useCallback((imageId: number, direction: 'left' | 'right') => {
-    if (isAnimating) return // Prevent multiple animations
-    
-    setIsAnimating(true)
-    setSlideDirection(direction)
-    
-    // Start animation
-    setTimeout(() => {
-      handleImageSelect(imageId)
-      
-      // Reset animation state after transition
-      setTimeout(() => {
-        setIsAnimating(false)
-        setSlideDirection(null)
-      }, 200) // Match CSS transition duration
-    }, 100) // Half of transition for slide out effect
-  }, [isAnimating, handleImageSelect])
 
   // Pan event handlers for image navigation using react-zoom-pan-pinch callbacks
   const handlePanningStart = useCallback((ref: ReactZoomPanPinchRef, event: TouchEvent | MouseEvent) => {
@@ -101,18 +81,18 @@ export function ZoomPanPinchViewer() {
         // Swipe left - go to next image
         const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
         const nextIndex = (currentIndex + 1) % imageGallery.length
-        handleImageSelectWithAnimation(imageGallery[nextIndex].id, 'left')
+        handleImageSelect(imageGallery[nextIndex].id)
       } else if (isRightSwipe) {
         // Swipe right - go to previous image
         const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
         const prevIndex = currentIndex === 0 ? imageGallery.length - 1 : currentIndex - 1
-        handleImageSelectWithAnimation(imageGallery[prevIndex].id, 'right')
+        handleImageSelect(imageGallery[prevIndex].id)
       }
     }
 
     setIsPanning(false)
     setPanStart(null)
-  }, [isPanning, panStart, currentImageId, handleImageSelectWithAnimation])
+  }, [isPanning, panStart, currentImageId, handleImageSelect])
 
   // Memoize thumbnail items to prevent unnecessary re-renders
   const thumbnailItems = useMemo(() => 
@@ -130,11 +110,8 @@ export function ZoomPanPinchViewer() {
       return
     }
     
-    const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
-    const targetIndex = imageGallery.findIndex((img) => img.id === imageId)
-    const direction = targetIndex > currentIndex ? 'left' : 'right'
-    handleImageSelectWithAnimation(imageId, direction)
-  }, [currentImageId, handleImageSelectWithAnimation])
+    handleImageSelect(imageId)
+  }, [currentImageId, handleImageSelect])
 
   return (
     <div className="h-full flex flex-col space-y-2">
@@ -159,15 +136,7 @@ export function ZoomPanPinchViewer() {
             wrapperClass="w-full h-full"
             contentClass="w-full h-full flex items-center justify-center"
           >
-            <div 
-              className={`transition-all duration-200 ease-out ${
-                isAnimating 
-                  ? slideDirection === 'left' 
-                    ? 'transform -translate-x-full opacity-0' 
-                    : 'transform translate-x-full opacity-0'
-                  : 'transform translate-x-0 opacity-100'
-              }`}
-            >
+            <div>
               <Image
                 src={currentImage.url || "/placeholder.svg"}
                 alt={currentImage.name}
