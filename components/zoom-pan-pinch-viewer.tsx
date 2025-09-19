@@ -59,12 +59,17 @@ export function ZoomPanPinchViewer() {
 
     const deltaX = panStart.x - clientX
     const deltaY = panStart.y - clientY
-    const isLeftSwipe = deltaX > 50
-    const isRightSwipe = deltaX < -50
-    const isVerticalSwipe = Math.abs(deltaY) > Math.abs(deltaX)
+    const absDeltaX = Math.abs(deltaX)
+    const absDeltaY = Math.abs(deltaY)
+    
+    // Increase swipe threshold and require clear horizontal movement
+    const swipeThreshold = 150 // Increased from 50 to 150px
+    const isLeftSwipe = deltaX > swipeThreshold
+    const isRightSwipe = deltaX < -swipeThreshold
+    const isHorizontalDominant = absDeltaX > absDeltaY * 1.5 // Horizontal must be 1.5x more than vertical
 
-    // Only handle horizontal swipes - allow swipe even when zoomed
-    if (!isVerticalSwipe) {
+    // Only handle horizontal swipes when movement is clearly horizontal
+    if (isHorizontalDominant && (isLeftSwipe || isRightSwipe)) {
       if (isLeftSwipe) {
         // Swipe left - go to next image
         const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
