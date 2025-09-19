@@ -56,8 +56,8 @@ export function ZoomPanPinchViewer() {
       setTimeout(() => {
         setIsAnimating(false)
         setSlideDirection(null)
-      }, 300) // Match CSS transition duration
-    }, 150) // Half of transition for slide out effect
+      }, 200) // Match CSS transition duration
+    }, 100) // Half of transition for slide out effect
   }, [isAnimating, handleImageSelect])
 
   // Pan event handlers for image navigation using react-zoom-pan-pinch callbacks
@@ -134,7 +134,7 @@ export function ZoomPanPinchViewer() {
             contentClass="w-full h-full flex items-center justify-center"
           >
             <div 
-              className={`transition-all duration-300 ease-in-out ${
+              className={`transition-all duration-200 ease-out ${
                 isAnimating 
                   ? slideDirection === 'left' 
                     ? 'transform -translate-x-full opacity-0' 
