@@ -80,8 +80,8 @@ export function ZoomPanPinchViewer() {
     const isRightSwipe = deltaX < -50
     const isVerticalSwipe = Math.abs(deltaY) > Math.abs(deltaX)
 
-    // Only handle horizontal swipes when not zoomed in
-    if (isVerticalSwipe || transformState.scale > 1) return
+    // Only handle horizontal swipes, allow swipe even when zoomed in
+    if (isVerticalSwipe) return
 
     if (isLeftSwipe) {
       // Swipe left - go to next image
@@ -94,7 +94,7 @@ export function ZoomPanPinchViewer() {
       const prevIndex = currentIndex === 0 ? imageGallery.length - 1 : currentIndex - 1
       handleImageSelect(imageGallery[prevIndex].id)
     }
-  }, [touchStart, touchEnd, currentImageId, transformState.scale, handleImageSelect])
+  }, [touchStart, touchEnd, currentImageId, handleImageSelect])
 
   return (
     <div className="h-full flex flex-col space-y-2">
