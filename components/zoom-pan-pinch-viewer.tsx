@@ -134,18 +134,48 @@ export function ZoomPanPinchViewer() {
             />
           </TransformComponent>
           <div className="bg-card rounded-lg p-2 flex-shrink-0">
-        <h3 className="text-sm font-medium text-card-foreground mb-2">Image Gallery</h3>
-        <MiniMap width={200}>
-            <Image
-              src={currentImage.url || "/placeholder.svg"}
-              alt={currentImage.name}
-              width={200}
-              height={150}
-              className="w-full h-full object-cover select-none"
-              draggable={false}
-            />
-          </MiniMap>
-      </div>
+            <h3 className="text-sm font-medium text-card-foreground mb-2">Image Gallery</h3>
+            <div className="flex gap-2 overflow-x-auto">
+              {imageGallery.map((image) => (
+                <div
+                  key={image.id}
+                  className={`relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                    currentImageId === image.id
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => handleImageSelect(image.id)}
+                >
+                  {currentImageId === image.id ? (
+                  <MiniMap width={200} height={200}>
+                    <Image
+                      src={image.url || "/placeholder.svg"}
+                      alt={image.name}
+                      width={120}
+                      height={200}
+                      className="w-full h-full object-cover select-none"
+                      draggable={false}
+                    />
+                  </MiniMap>
+                  ) : (
+                    <Image
+                      src={image.thumbnail || image.url || "/placeholder.svg"}
+                      alt={image.name}
+                      width={120}
+                      height={90}
+                      className="w-full h-full object-cover select-none"
+                      draggable={false}
+                    />
+                  )}
+                  {currentImageId === image.id && (
+                    <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </TransformWrapper>
       </div>
     </div>
