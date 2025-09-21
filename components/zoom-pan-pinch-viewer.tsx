@@ -4,19 +4,20 @@ import { useState, useRef, useCallback, useMemo } from "react"
 import { TransformWrapper, TransformComponent, MiniMap, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch"
 
 import Image from "next/image"
+import { Button } from "@/components/ui/button"
 
 const imageGallery = [
   {
     id: 1,
     name: "Menu 1",
-    url: "/image-4.png",
-    thumbnail: "/image-4.png",
+    url: "/menu_jp_1.jpg",
+    thumbnail: "/menu_jp_1.jpg",
   },
   {
     id: 2,
     name: "Menu 2",
-    url: "/image-5.png",
-    thumbnail: "/image-5.png",
+    url: "/menu_jp_2.jpg",
+    thumbnail: "/menu_jp_2.jpg",
   }
 ]
 
@@ -55,7 +56,7 @@ export function ZoomPanPinchViewer() {
   }, [])
 
   const handlePanningStop = useCallback((ref: ReactZoomPanPinchRef, event: TouchEvent | MouseEvent) => {
-    if (!isPanning || !panStart) {
+    if (!isPanning || !panStart || !ref) {
       setIsPanning(false)
       setPanStart(null)
       return
@@ -69,14 +70,53 @@ export function ZoomPanPinchViewer() {
     const absDeltaX = Math.abs(deltaX)
     const absDeltaY = Math.abs(deltaY)
     
-    // Increase swipe threshold and require clear horizontal movement
-    const swipeThreshold = 150 // Increased from 50 to 150px
+    // Get current transform state
+    const { state } = ref
+    const { scale, positionX } = state
+    
+    const swipeThreshold = 120 // Increased threshold
     const isLeftSwipe = deltaX > swipeThreshold
     const isRightSwipe = deltaX < -swipeThreshold
-    const isHorizontalDominant = absDeltaX > absDeltaY * 1.5 // Horizontal must be 1.5x more than vertical
+    const isHorizontalDominant = absDeltaX > absDeltaY * 2 // Increased to 2x for more precision
+    
+    // Allow image navigation when:
+    // 1. At minimum scale AND significant horizontal movement
+    // 2. When zoomed in but at horizontal boundaries AND trying to pan beyond
+    const isAtMinScale = scale <= 1.02 // Stricter scale check
+    
+    let canNavigate = false
+    
+    if (isAtMinScale) {
+      // When not zoomed, require significant horizontal movement to navigate
+      canNavigate = isHorizontalDominant && (isLeftSwipe || isRightSwipe) && absDeltaX > 150
+    } else {
+      // When zoomed in, check if we're at the horizontal boundaries
+      // AND user is trying to drag beyond image bounds
+      const wrapperEl = ref.instance?.wrapperComponent
+      const contentEl = ref.instance?.contentComponent
+      const containerWidth = wrapperEl?.getBoundingClientRect().width || 0
+      const contentWidth = contentEl?.getBoundingClientRect().width || 0
+      const scaledContentWidth = contentWidth * scale
+      
+      // Calculate actual boundaries
+      const maxPositionX = Math.max(0, (scaledContentWidth - containerWidth) / 2)
+      const minPositionX = -maxPositionX
+      
+      // Check if we're at boundaries with stricter tolerance
+      const isAtLeftBound = positionX >= maxPositionX - 1
+      const isAtRightBound = positionX <= minPositionX + 1
+      
+      // Only navigate when:
+      // 1. Clear horizontal movement
+      // 2. At boundary
+      // 3. Sufficient movement (trying to drag beyond bounds)
+      canNavigate = isHorizontalDominant && absDeltaX > 100 && (
+        (isLeftSwipe && isAtRightBound) || // Swipe left when at right bound
+        (isRightSwipe && isAtLeftBound)    // Swipe right when at left bound
+      )
+    }
 
-    // Only handle horizontal swipes when movement is clearly horizontal
-    if (isHorizontalDominant && (isLeftSwipe || isRightSwipe)) {
+    if (canNavigate) {
       if (isLeftSwipe) {
         // Swipe left - go to next image
         const currentIndex = imageGallery.findIndex((img) => img.id === currentImageId)
@@ -104,9 +144,18 @@ export function ZoomPanPinchViewer() {
   }
 
   return (
-    <div className="h-full flex flex-col space-y-2">
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <span className="font-black text-foreground text-lg">Image Gallery</span>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="outline">View</Button>
+          <Button variant="primary">Share</Button>
+        </div>
+      </header>
+      
       {/* Main Image Viewer */}
-      <div className="relative flex-col rounded-lg  min-h-0 max-w-4xl mx-auto w-full flex items-center justify-center">
+      <div className="relative flex-col rounded-lg max-w-4xl mx-auto w-full flex items-center justify-center mt-2 flex-1 overflow-hidden">
         <TransformWrapper
           ref={transformRef}
           initialScale={1} // reset initial scale to 1 (100%)
@@ -130,8 +179,8 @@ export function ZoomPanPinchViewer() {
               <Image
                 src={currentImage.url || "/placeholder.svg"}
                 alt={currentImage.name}
-                width={380}
-                height={600}
+                width={450}
+                height={550}
                 className="w-auto h-auto max-w-full max-h-full object-contain select-none"
                 draggable={false}
               />
@@ -151,7 +200,7 @@ export function ZoomPanPinchViewer() {
                   onClick={() => handleThumbnailClick(image.id)}
                 >
                   {currentImageId === image.id ? (
-                    <MiniMap width={200} height={200}>
+                    <MiniMap width={200} height={200} borderColor="#1d4279">
                       <Image
                         src={image.url || "/placeholder.svg"}
                         alt={image.name}
@@ -165,7 +214,7 @@ export function ZoomPanPinchViewer() {
                     <Image
                       src={image.thumbnail || image.url || "/placeholder.svg"}
                       alt={image.name}
-                      width={120}
+                      width={140}
                       height={90}
                       className="w-full h-full object-cover select-none"
                       draggable={false}
