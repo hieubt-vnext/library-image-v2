@@ -155,7 +155,7 @@ export function ZoomPanPinchViewer() {
       </header>
       
       {/* Main Image Viewer */}
-      <div className="relative flex-col rounded-lg max-w-4xl mx-auto w-full flex items-center justify-center mt-2 flex-1 overflow-hidden">
+      <div className="relative flex-col rounded-lg max-w-4xl mx-auto w-full flex items-center justify-center mt-2 flex-1 overflow-hidden pb-32">
         <TransformWrapper
           ref={transformRef}
           initialScale={1} // reset initial scale to 1 (100%)
@@ -187,8 +187,9 @@ export function ZoomPanPinchViewer() {
             </div>
           </TransformComponent>
           
-          <div className="bg-card rounded-lg mt-5 flex-shrink-0">
-            <div className="flex gap-2 overflow-x-auto">
+          <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t py-2 z-10">
+            <div className="max-w-4xl mx-auto">
+              <div className="flex gap-2 overflow-x-auto justify-center">
               {imageGallery.map((image) => (
                 <div
                   key={image.id}
@@ -227,6 +228,7 @@ export function ZoomPanPinchViewer() {
                   )}
                 </div>
               ))}
+              </div>
             </div>
           </div>
         </TransformWrapper>
