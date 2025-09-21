@@ -197,12 +197,12 @@ export function ZoomPanPinchViewer() {
                   onClick={() => handleThumbnailClick(image.id)}
                 >
                   {currentImageId === image.id ? (
-                    <MiniMap width={200} height={200} borderColor="#1d4279">
+                    <MiniMap width={120} height={120} borderColor="#1d4279">
                       <Image
                         src={image.url || "/placeholder.svg"}
                         alt={image.name}
-                        width={120}
-                        height={200}
+                        width={80}
+                        height={120}
                         className="w-full h-full object-cover select-none"
                         draggable={false}
                       />
@@ -211,17 +211,13 @@ export function ZoomPanPinchViewer() {
                     <Image
                       src={image.thumbnail || image.url || "/placeholder.svg"}
                       alt={image.name}
-                      width={140}
-                      height={90}
+                      width={80}
+                      height={60}
                       className="w-full h-full object-cover select-none"
                       draggable={false}
                     />
                   )}
-                  {currentImageId === image.id && (
-                    <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-primary rounded-full"></div>
-                    </div>
-                  )}
+                  
                 </div>
               ))}
               </div>
