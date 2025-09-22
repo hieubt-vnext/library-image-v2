@@ -19,12 +19,12 @@ const imageGallery = [
     url: "/menu_jp_2.jpg",
     thumbnail: "/menu_jp_2.jpg",
   },
-  {
-    id: 3,
-    name: "Menu 3",
-    url: "/menu_jp_3.jpg",
-    thumbnail: "/menu_jp_3.jpg",
-  },
+  // {
+  //   id: 3,
+  //   name: "Menu 3",
+  //   url: "/menu_jp_3.jpg",
+  //   thumbnail: "/menu_jp_3.jpg",
+  // },
   {
     id: 4,
     name: "Menu 4",
