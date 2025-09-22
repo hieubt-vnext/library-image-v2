@@ -43,6 +43,18 @@ const imageGallery = [
     url: "/menu_jp_6.png",
     thumbnail: "/menu_jp_6.png",
   },
+  {
+    id: 7,
+    name: "Menu 7",
+    url: "/menu_jp_7.png",
+    thumbnail: "/menu_jp_7.png",
+  },
+  {
+    id: 8,
+    name: "Menu 8",
+    url: "/menu_jp_8.png",
+    thumbnail: "/menu_jp_8.png",
+  },
 ]
 
 export function ZoomPanPinchViewer() {
