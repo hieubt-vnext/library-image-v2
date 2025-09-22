@@ -178,7 +178,7 @@ export function ZoomPanPinchViewer() {
                 width={450}
                 height={550}
                 className="w-auto h-auto max-w-full max-h-full object-contain select-none"
-                draggable={false}
+                draggable={true}
               />
             </div>
           </TransformComponent>
