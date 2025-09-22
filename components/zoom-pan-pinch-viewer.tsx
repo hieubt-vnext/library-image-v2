@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback, useMemo } from "react"
+import { useState, useRef, useCallback, useMemo, useEffect } from "react"
 import { TransformWrapper, TransformComponent, MiniMap, type ReactZoomPanPinchRef } from "react-zoom-pan-pinch"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 
@@ -55,6 +55,7 @@ export function ZoomPanPinchViewer() {
   )
 
   const transformRef = useRef<ReactZoomPanPinchRef>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   const handleImageSelect = useCallback((imageId: number) => {
     setCurrentImageId(imageId)
@@ -63,6 +64,20 @@ export function ZoomPanPinchViewer() {
       transformRef.current.resetTransform()
     }
   }, [])
+
+  // Auto-scroll to selected thumbnail
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      const selectedThumbnail = scrollAreaRef.current.querySelector(`[data-image-id="${currentImageId}"]`) as HTMLElement
+      if (selectedThumbnail) {
+        selectedThumbnail.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        })
+      }
+    }
+  }, [currentImageId])
 
   const handleThumbnailClick = (imageId: number) => {
     // Prevent clicking on already selected item
@@ -113,11 +128,12 @@ export function ZoomPanPinchViewer() {
           
           <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t py-2 z-10">
             <div className="max-w-4xl mx-auto">
-              <ScrollArea className="w-full rounded-md">
+              <ScrollArea className="w-full rounded-md" ref={scrollAreaRef}>
                 <div className="flex w-max space-x-4 p-4">
                 {imageGallery.map((image) => (
                 <div
                   key={image.id}
+                  data-image-id={image.id}
                   className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
                     currentImageId === image.id
                       ? "border-none cursor-default"
