@@ -191,8 +191,8 @@ export function ZoomPanPinchViewer() {
                   key={image.id}
                   className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
                     currentImageId === image.id
-                      ? "border-primary ring-2 ring-primary/20 cursor-default"
-                      : "border-border hover:border-primary/50 cursor-pointer"
+                      ? "border-none cursor-default"
+                      : "border-none  cursor-pointer"
                   }`}
                   onClick={() => handleThumbnailClick(image.id)}
                 >
@@ -212,8 +212,8 @@ export function ZoomPanPinchViewer() {
                       src={image.thumbnail || image.url || "/placeholder.svg"}
                       alt={image.name}
                       width={80}
-                      height={60}
-                      className="w-full h-full object-cover select-none"
+                      height={120}
+                      className="w-full h-[85px] object-cover select-none"
                       draggable={false}
                     />
                   )}
