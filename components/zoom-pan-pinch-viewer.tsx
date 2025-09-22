@@ -71,7 +71,7 @@ export function ZoomPanPinchViewer() {
       const selectedThumbnail = scrollAreaRef.current.querySelector(`[data-image-id="${currentImageId}"]`) as HTMLElement
       if (selectedThumbnail) {
         selectedThumbnail.scrollIntoView({
-          behavior: 'smooth',
+          behavior: 'auto',
           block: 'nearest',
           inline: 'center'
         })
