@@ -16,8 +16,8 @@ const imageGallery = [
   {
     id: 2,
     name: "Menu 2",
-    url: "/menu_jp_2.jpg",
-    thumbnail: "/menu_jp_2.jpg",
+    url: "/menu_jp_3.jpg",
+    thumbnail: "/menu_jp_3.jpg",
   }
 ]
 
