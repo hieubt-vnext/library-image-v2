@@ -74,47 +74,54 @@ export function ZoomPanPinchViewer() {
     const { state } = ref
     const { scale, positionX } = state
     
-    const swipeThreshold = 120 // Increased threshold
+    // Much more lenient thresholds for mobile touch
+    const swipeThreshold = 50
     const isLeftSwipe = deltaX > swipeThreshold
     const isRightSwipe = deltaX < -swipeThreshold
-    const isHorizontalDominant = absDeltaX > absDeltaY * 2 // Increased to 2x for more precision
-    
-    // Allow image navigation when:
-    // 1. At minimum scale AND significant horizontal movement
-    // 2. When zoomed in but at horizontal boundaries AND trying to pan beyond
-    const isAtMinScale = scale <= 1.02 // Stricter scale check
+    const isHorizontalDominant = absDeltaX > absDeltaY
     
     let canNavigate = false
     
-    if (isAtMinScale) {
-      // When not zoomed, require significant horizontal movement to navigate
-      canNavigate = isHorizontalDominant && (isLeftSwipe || isRightSwipe) && absDeltaX > 150
+    // Simplified logic: allow navigation in more cases
+    if (scale <= 1.1) {
+      // When at or near minimum scale, allow easy navigation
+      canNavigate = isHorizontalDominant && (isLeftSwipe || isRightSwipe)
     } else {
-      // When zoomed in, check if we're at the horizontal boundaries
-      // AND user is trying to drag beyond image bounds
+      // When zoomed in, check if we're trying to pan beyond image bounds
       const wrapperEl = ref.instance?.wrapperComponent
       const contentEl = ref.instance?.contentComponent
-      const containerWidth = wrapperEl?.getBoundingClientRect().width || 0
-      const contentWidth = contentEl?.getBoundingClientRect().width || 0
-      const scaledContentWidth = contentWidth * scale
       
-      // Calculate actual boundaries
-      const maxPositionX = Math.max(0, (scaledContentWidth - containerWidth) / 2)
-      const minPositionX = -maxPositionX
-      
-      // Check if we're at boundaries with stricter tolerance
-      const isAtLeftBound = positionX >= maxPositionX - 1
-      const isAtRightBound = positionX <= minPositionX + 1
-      
-      // Only navigate when:
-      // 1. Clear horizontal movement
-      // 2. At boundary
-      // 3. Sufficient movement (trying to drag beyond bounds)
-      canNavigate = isHorizontalDominant && absDeltaX > 100 && (
-        (isLeftSwipe && isAtRightBound) || // Swipe left when at right bound
-        (isRightSwipe && isAtLeftBound)    // Swipe right when at left bound
-      )
+      if (wrapperEl && contentEl) {
+        const containerRect = wrapperEl.getBoundingClientRect()
+        const contentRect = contentEl.getBoundingClientRect()
+        
+        // Calculate if content is at horizontal boundaries
+        const isAtLeftEdge = contentRect.left >= containerRect.left - 5
+        const isAtRightEdge = contentRect.right <= containerRect.right + 5
+        
+        // Allow navigation when:
+        // 1. Horizontal swipe motion
+        // 2. At edge of content AND trying to swipe beyond
+        canNavigate = isHorizontalDominant && absDeltaX > 40 && (
+          (isLeftSwipe && isAtRightEdge) ||
+          (isRightSwipe && isAtLeftEdge)
+        )
+      }
     }
+
+    // Debug log để kiểm tra
+    console.log('Swipe Debug:', {
+      deltaX,
+      deltaY,
+      absDeltaX,
+      absDeltaY,
+      scale,
+      positionX,
+      isHorizontalDominant,
+      isLeftSwipe,
+      isRightSwipe,
+      canNavigate
+    })
 
     if (canNavigate) {
       if (isLeftSwipe) {
@@ -178,7 +185,7 @@ export function ZoomPanPinchViewer() {
                 width={450}
                 height={550}
                 className="w-auto h-auto max-w-full max-h-full object-contain select-none"
-                draggable={true}
+                draggable={false}
               />
             </div>
           </TransformComponent>
