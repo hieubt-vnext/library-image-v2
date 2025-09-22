@@ -59,6 +59,7 @@ const imageGallery = [
 
 export function ZoomPanPinchViewer() {
   const [currentImageId, setCurrentImageId] = useState(1)
+  const [currentScale, setCurrentScale] = useState(1)
   
   // Memoize current image to prevent unnecessary recalculations
   const currentImage = useMemo(() => 
@@ -71,10 +72,15 @@ export function ZoomPanPinchViewer() {
 
   const handleImageSelect = useCallback((imageId: number) => {
     setCurrentImageId(imageId)
-    // Optional: Reset transform when switching images (comment out if you want to keep zoom/pan state)
+    // Reset scale state and transform when switching images
+    setCurrentScale(1)
     if (transformRef.current) {
       transformRef.current.resetTransform()
     }
+  }, [])
+
+  const handleTransformChange = useCallback((ref: ReactZoomPanPinchRef) => {
+    setCurrentScale(ref.state.scale)
   }, [])
 
   // Auto-scroll to selected thumbnail
@@ -108,7 +114,7 @@ export function ZoomPanPinchViewer() {
       </header>
       
       {/* Main Image Viewer */}
-      <div className="relative flex-col rounded-lg max-w-4xl mx-auto w-full flex items-center justify-center mt-2 flex-1 overflow-hidden pb-32">
+      <div className="relative flex-col rounded-lg max-w-4xl mx-auto w-full flex items-center justify-center mt-2 flex-1 overflow-hidden pb-32 min-h-0">
         <TransformWrapper
           ref={transformRef}
           initialScale={1} // reset initial scale to 1 (100%)
@@ -120,19 +126,20 @@ export function ZoomPanPinchViewer() {
           doubleClick={{ mode: "reset" }}
           limitToBounds={true}
           centerZoomedOut={true}
-          panning={{ disabled: false }} // Enable panning for both zoom and navigation
+          panning={{ disabled: currentScale <= 1 }} // Disable panning when at 100% scale
+          onTransformed={handleTransformChange}
         >
           <TransformComponent
-            wrapperClass="w-full h-full"
+            wrapperClass="w-full h-full flex items-center justify-center"
             contentClass="w-full h-full flex items-center justify-center"
           >
-            <div>
+            <div className="flex items-center justify-center w-full h-full">
               <Image
                 src={currentImage.url || "/placeholder.svg"}
                 alt={currentImage.name}
                 width={450}
                 height={550}
-                className="w-auto h-auto max-w-full max-h-full object-contain select-none"
+                className="w-auto h-auto max-h-[calc(100vh-12rem)] object-contain select-none"
                 draggable={false}
               />
             </div>
