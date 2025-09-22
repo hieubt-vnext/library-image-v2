@@ -31,7 +31,7 @@ export function ZoomPanPinchViewer() {
   )
 
   // Pan/drag state for image navigation
-  const [panStart, setPanStart] = useState<{ x: number; y: number } | null>(null)
+  const [panStart, setPanStart] = useState<{ x: number; y: number; time: number } | null>(null)
   const [isPanning, setIsPanning] = useState(false)
   
 
@@ -52,7 +52,7 @@ export function ZoomPanPinchViewer() {
     const clientX = 'touches' in event ? event.touches[0].clientX : event.clientX
     const clientY = 'touches' in event ? event.touches[0].clientY : event.clientY
     
-    setPanStart({ x: clientX, y: clientY })
+    setPanStart({ x: clientX, y: clientY, time: Date.now() })
   }, [])
 
   const handlePanningStop = useCallback((ref: ReactZoomPanPinchRef, event: TouchEvent | MouseEvent) => {
@@ -62,6 +62,7 @@ export function ZoomPanPinchViewer() {
       return
     }
 
+    const currentTime = Date.now()
     const clientX = 'changedTouches' in event ? event.changedTouches[0].clientX : event.clientX
     const clientY = 'changedTouches' in event ? event.changedTouches[0].clientY : event.clientY
 
@@ -69,54 +70,63 @@ export function ZoomPanPinchViewer() {
     const deltaY = panStart.y - clientY
     const absDeltaX = Math.abs(deltaX)
     const absDeltaY = Math.abs(deltaY)
+    const timeDelta = currentTime - panStart.time
     
     // Get current transform state
     const { state } = ref
     const { scale, positionX } = state
     
-    // Much more lenient thresholds for mobile touch
-    const swipeThreshold = 50
-    const isLeftSwipe = deltaX > swipeThreshold
-    const isRightSwipe = deltaX < -swipeThreshold
-    const isHorizontalDominant = absDeltaX > absDeltaY
+    // Swipe detection với khoảng cách và thời gian
+    const minSwipeDistance = 100 // Tăng khoảng cách tối thiểu để trigger
+    const maxSwipeTime = 500 // Thời gian tối đa cho một swipe gesture (ms)
+    const minSwipeVelocity = 0.3 // Tốc độ tối thiểu (pixel/ms)
+    
+    const velocity = absDeltaX / timeDelta
+    const isValidSwipeGesture = timeDelta < maxSwipeTime && velocity > minSwipeVelocity
+    
+    const isLeftSwipe = deltaX > minSwipeDistance
+    const isRightSwipe = deltaX < -minSwipeDistance
+    const isHorizontalDominant = absDeltaX > absDeltaY * 1.5 // Phải rõ ràng là movement ngang
     
     let canNavigate = false
     
-    // Simplified logic: allow navigation in more cases
-    if (scale <= 1.1) {
-      // When at or near minimum scale, allow easy navigation
-      canNavigate = isHorizontalDominant && (isLeftSwipe || isRightSwipe)
-    } else {
-      // When zoomed in, check if we're trying to pan beyond image bounds
-      const wrapperEl = ref.instance?.wrapperComponent
-      const contentEl = ref.instance?.contentComponent
-      
-      if (wrapperEl && contentEl) {
-        const containerRect = wrapperEl.getBoundingClientRect()
-        const contentRect = contentEl.getBoundingClientRect()
+    // Chỉ cho phép navigation khi đây là một gesture swipe rõ ràng
+    if (isValidSwipeGesture && isHorizontalDominant && (isLeftSwipe || isRightSwipe)) {
+      if (scale <= 1.1) {
+        // Khi không zoom hoặc zoom ít, cho phép navigation dễ dàng
+        canNavigate = true
+      } else {
+        // Khi zoom nhiều, kiểm tra boundaries
+        const wrapperEl = ref.instance?.wrapperComponent
+        const contentEl = ref.instance?.contentComponent
         
-        // Calculate if content is at horizontal boundaries
-        const isAtLeftEdge = contentRect.left >= containerRect.left - 5
-        const isAtRightEdge = contentRect.right <= containerRect.right + 5
-        
-        // Allow navigation when:
-        // 1. Horizontal swipe motion
-        // 2. At edge of content AND trying to swipe beyond
-        canNavigate = isHorizontalDominant && absDeltaX > 40 && (
-          (isLeftSwipe && isAtRightEdge) ||
-          (isRightSwipe && isAtLeftEdge)
-        )
+        if (wrapperEl && contentEl) {
+          const containerRect = wrapperEl.getBoundingClientRect()
+          const contentRect = contentEl.getBoundingClientRect()
+          
+          // Kiểm tra xem content có ở edge không
+          const isAtLeftEdge = contentRect.left >= containerRect.left - 10
+          const isAtRightEdge = contentRect.right <= containerRect.right + 10
+          
+          // Chỉ cho phép navigation khi ở edge và swipe đủ xa
+          canNavigate = (
+            (isLeftSwipe && isAtRightEdge) ||
+            (isRightSwipe && isAtLeftEdge)
+          )
+        }
       }
     }
 
-    // Debug log để kiểm tra
+    // Debug log để theo dõi
     console.log('Swipe Debug:', {
       deltaX,
       deltaY,
       absDeltaX,
       absDeltaY,
+      timeDelta,
+      velocity,
       scale,
-      positionX,
+      isValidSwipeGesture,
       isHorizontalDominant,
       isLeftSwipe,
       isRightSwipe,
