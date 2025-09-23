@@ -59,7 +59,6 @@ const imageGallery = [
 
 export function ZoomPanPinchViewer() {
   const [currentImageId, setCurrentImageId] = useState(1)
-  const [currentScale, setCurrentScale] = useState(1)
   
   // Memoize current image to prevent unnecessary recalculations
   const currentImage = useMemo(() => 
@@ -72,15 +71,10 @@ export function ZoomPanPinchViewer() {
 
   const handleImageSelect = useCallback((imageId: number) => {
     setCurrentImageId(imageId)
-    // Reset scale state and transform when switching images
-    setCurrentScale(1)
+    // Optional: Reset transform when switching images (comment out if you want to keep zoom/pan state)
     if (transformRef.current) {
       transformRef.current.resetTransform()
     }
-  }, [])
-
-  const handleTransformChange = useCallback((ref: ReactZoomPanPinchRef) => {
-    setCurrentScale(ref.state.scale)
   }, [])
 
   // Auto-scroll to selected thumbnail
@@ -126,8 +120,7 @@ export function ZoomPanPinchViewer() {
           doubleClick={{ mode: "reset" }}
           limitToBounds={true}
           centerZoomedOut={true}
-          panning={{ disabled: currentScale <= 1 }} // Disable panning when at 100% scale
-          onTransformed={handleTransformChange}
+          panning={{ disabled: false }} // Enable panning for both zoom and navigation
         >
           <TransformComponent
             wrapperClass="w-full h-full flex items-center justify-center"
