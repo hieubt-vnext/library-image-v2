@@ -139,7 +139,7 @@ export function ZoomPanPinchViewer() {
                 alt={currentImage.name}
                 width={450}
                 height={550}
-                className="w-auto h-auto object-contain select-none"
+                className="w-auto h-auto object-contain select-none mb-4"
                 draggable={false}
               />
             </div>
