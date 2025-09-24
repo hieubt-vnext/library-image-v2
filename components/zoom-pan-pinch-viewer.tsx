@@ -123,7 +123,7 @@ export function ZoomPanPinchViewer() {
           panning={{ disabled: false }} // Enable panning for both zoom and navigation
         >
           <TransformComponent
-            wrapperClass="w-full h-full flex items-center justify-center"
+            wrapperClass="w-full h-full flex !h-screen"
             contentClass="w-full h-full flex items-center justify-center"
           >
             <div className="flex items-center justify-center w-full h-full">
