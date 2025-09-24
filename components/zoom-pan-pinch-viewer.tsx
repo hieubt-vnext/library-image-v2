@@ -72,10 +72,10 @@ export function ZoomPanPinchViewer() {
 
   const handleImageSelect = useCallback((imageId: number) => {
     setCurrentImageId(imageId)
-    // Optional: Reset transform when switching images (comment out if you want to keep zoom/pan state)
-    if (transformRef.current) {
-      transformRef.current.resetTransform()
-    }
+    // Keep zoom/pan state when switching images
+    // if (transformRef.current) {
+    //   transformRef.current.resetTransform()
+    // }
   }, [])
 
   const handleTransformChange = useCallback((_ref: ReactZoomPanPinchRef, state: { scale: number; positionX: number; positionY: number; }) => {
