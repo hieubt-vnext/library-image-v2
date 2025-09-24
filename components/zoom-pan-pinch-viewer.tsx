@@ -59,6 +59,7 @@ const imageGallery = [
 
 export function ZoomPanPinchViewer() {
   const [currentImageId, setCurrentImageId] = useState(1)
+  const [zoomScale, setZoomScale] = useState(1)
   
   // Memoize current image to prevent unnecessary recalculations
   const currentImage = useMemo(() => 
@@ -75,6 +76,10 @@ export function ZoomPanPinchViewer() {
     if (transformRef.current) {
       transformRef.current.resetTransform()
     }
+  }, [])
+
+  const handleTransformChange = useCallback((_ref: ReactZoomPanPinchRef, state: { scale: number; positionX: number; positionY: number; }) => {
+    setZoomScale(state.scale)
   }, [])
 
   // Auto-scroll to selected thumbnail
@@ -99,6 +104,7 @@ export function ZoomPanPinchViewer() {
     
     handleImageSelect(imageId)
   }
+  
 
   return (
     <div className="h-full flex flex-col">
@@ -108,7 +114,7 @@ export function ZoomPanPinchViewer() {
       </header>
       
       {/* Main Image Viewer */}
-      <div className="relative flex-col rounded-lg max-w-4xl mx-auto w-full flex items-center justify-center mt-2 flex-1 overflow-hidden pb-32 min-h-0">
+      <div className="relative flex-col rounded-lg max-w-4xl mx-auto w-full flex items-center justify-center flex-1 overflow-hidden pb-32 min-h-0">
         <TransformWrapper
           ref={transformRef}
           initialScale={1} // reset initial scale to 1 (100%)
@@ -120,10 +126,11 @@ export function ZoomPanPinchViewer() {
           doubleClick={{ mode: "reset" }}
           limitToBounds={true}
           centerZoomedOut={true}
-          panning={{ disabled: false }} // Enable panning for both zoom and navigation
+          panning={{ disabled: false }}
+          onTransformed={handleTransformChange}
         >
           <TransformComponent
-            wrapperClass="w-full h-full flex !h-screen"
+            wrapperClass={`w-full h-full flex ${zoomScale === 1 ? '!h-auto items-center justify-center' : '!h-screen'}`}
             contentClass="w-full h-full flex items-center justify-center"
           >
             <div className="flex items-center justify-center w-full h-full">
@@ -132,7 +139,7 @@ export function ZoomPanPinchViewer() {
                 alt={currentImage.name}
                 width={450}
                 height={550}
-                className="w-auto h-auto max-h-[calc(100vh-12rem)] object-contain select-none"
+                className="w-auto h-auto object-contain select-none"
                 draggable={false}
               />
             </div>
