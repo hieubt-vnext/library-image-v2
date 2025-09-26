@@ -99,6 +99,18 @@ export function ZoomPanPinchViewer() {
     [isInitialized],
   );
 
+  const handlePanningStop = useCallback(
+    (ref: ReactZoomPanPinchRef) => {
+      // Auto center when panning stops and scale is 100%
+      if (ref && isInitialized && zoomScale === 1) {
+        setTimeout(() => {
+          ref.centerView(undefined, 300); // Center with smooth animation
+        }, 100); // Small delay to ensure panning has fully stopped
+      }
+    },
+    [isInitialized, zoomScale],
+  );
+
   const handleInit = useCallback((ref: ReactZoomPanPinchRef) => {
     // Reset transform first, then center
     ref.resetTransform(0); // Reset position and scale without animation
@@ -205,6 +217,7 @@ export function ZoomPanPinchViewer() {
           }}
           onTransformed={handleTransformChange}
           onInit={handleInit}
+          onPanningStop={handlePanningStop}
         >
           <TransformComponent
             wrapperClass={`w-full h-full flex !h-screen`}
