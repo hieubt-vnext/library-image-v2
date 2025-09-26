@@ -99,12 +99,32 @@ export function ZoomPanPinchViewer() {
     [isInitialized],
   );
 
+  const handleInit = useCallback((ref: ReactZoomPanPinchRef) => {
+    // Center immediately when initialized
+    ref.centerView(undefined, 0);
+    setIsInitialized(true);
+  }, []);
+
   // Initialize and center view immediately on mount
   useEffect(() => {
-    if (transformRef.current) {
-      // Force immediate center without animation
-      transformRef.current.centerView(undefined, 0);
-      setIsInitialized(true);
+    const initializeCenter = () => {
+      if (transformRef.current) {
+        // Force immediate center without animation
+        transformRef.current.centerView(undefined, 0);
+        setIsInitialized(true);
+        return true;
+      }
+      return false;
+    };
+
+    // Try to initialize immediately
+    if (!initializeCenter()) {
+      // If not ready, try again after a short delay
+      const timer = setTimeout(() => {
+        initializeCenter();
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -168,6 +188,7 @@ export function ZoomPanPinchViewer() {
             lockAxisY: zoomScale === 1, // Khóa trục Y khi zoom scale = 1
           }}
           onTransformed={handleTransformChange}
+          onInit={handleInit}
         >
           <TransformComponent
             wrapperClass={`w-full h-full flex !h-screen`}
