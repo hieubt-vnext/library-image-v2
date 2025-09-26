@@ -65,6 +65,7 @@ const imageGallery = [
 export function ZoomPanPinchViewer() {
   const [currentImageId, setCurrentImageId] = useState(1);
   const [zoomScale, setZoomScale] = useState(1);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Memoize current image to prevent unnecessary recalculations
   const currentImage = useMemo(
@@ -90,16 +91,29 @@ export function ZoomPanPinchViewer() {
       state: { scale: number; positionX: number; positionY: number },
     ) => {
       setZoomScale(state.scale);
+      // Mark as initialized after first transform
+      if (!isInitialized) {
+        setIsInitialized(true);
+      }
     },
-    [],
+    [isInitialized],
   );
 
-  // Center image when zoom scale returns to 1
+  // Initialize and center view immediately on mount
   useEffect(() => {
-    if (zoomScale === 1 && transformRef.current) {
-      transformRef.current.centerView();
+    if (transformRef.current) {
+      // Force immediate center without animation
+      transformRef.current.centerView(undefined, 0);
+      setIsInitialized(true);
     }
-  }, [zoomScale]);
+  }, []);
+
+  // Center image when zoom scale returns to 1 (without animation)
+  useEffect(() => {
+    if (zoomScale === 1 && transformRef.current && isInitialized) {
+      transformRef.current.centerView(undefined, 0); // 0 duration = no animation
+    }
+  }, [zoomScale, isInitialized]);
 
 
   // Auto-scroll to selected thumbnail
@@ -146,7 +160,7 @@ export function ZoomPanPinchViewer() {
           centerOnInit={true}
           wheel={{ step: 0.1 }}
           pinch={{ step: 5 }}
-          doubleClick={{ mode: "reset" }}
+          doubleClick={{ mode: "reset", animationTime: 0 }} // No animation for double click reset
           limitToBounds={true}
           centerZoomedOut={true}
           panning={{ 
@@ -159,7 +173,7 @@ export function ZoomPanPinchViewer() {
             wrapperClass={`w-full h-full flex !h-screen`}
             contentClass="w-full h-full flex items-center justify-center"
           >
-            <div className="flex items-center justify-center w-full h-full">
+            <div className={`flex items-center justify-center w-full h-full transition-opacity duration-0 ${isInitialized ? 'opacity-100' : 'opacity-0'}`}>
               <Image
                 src={currentImage.url || "/placeholder.svg"}
                 alt={currentImage.name}
@@ -198,12 +212,12 @@ export function ZoomPanPinchViewer() {
                               draggable={false}
                             />
                           ) : (
-                            <MiniMap width={120} height={100} borderColor="#1d4279">
+                            <MiniMap width={200} height={85} borderColor="#1d4279">
                               <Image
                                 src={image.url || "/placeholder.svg"}
                                 alt={image.name}
                                 width={80}
-                                height={100}
+                                height={85}
                                 className="w-full h-full object-cover select-none"
                                 draggable={false}
                               />
