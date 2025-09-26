@@ -163,7 +163,7 @@ export function ZoomPanPinchViewer() {
           <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t py-2 z-10">
             <div className="max-w-4xl mx-auto">
               <ScrollArea className="w-full rounded-md" ref={scrollAreaRef}>
-                <div className="flex w-max space-x-4 p-4">
+                <div className="flex w-max space-x-4 p-4 h-full">
                   {imageGallery.map((image) => (
                     <div
                       key={image.id}
@@ -176,28 +176,43 @@ export function ZoomPanPinchViewer() {
                       onClick={() => handleThumbnailClick(image.id)}
                     >
                       {currentImageId === image.id ? (
-                        <MiniMap width={120} height={120} borderColor="#1d4279">
+                        <>
+                          {zoomScale === 1 ? (
+                            <Image
+                              src={image.thumbnail || image.url || "/placeholder.svg"}
+                              alt={image.name}
+                              width={120}
+                              height={120}
+                              className="w-full h-[85px] object-cover select-none border-4 border-[#1d4279]"
+                              draggable={false}
+                            />
+                          ) : (
+                            <MiniMap width={120} height={100} borderColor="#1d4279">
+                              <Image
+                                src={image.url || "/placeholder.svg"}
+                                alt={image.name}
+                                width={80}
+                                height={100}
+                                className="w-full h-full object-cover select-none"
+                                draggable={false}
+                              />
+                            </MiniMap>
+                          )}
+                        </>
+                      ) : (
                           <Image
-                            src={image.url || "/placeholder.svg"}
+                            src={
+                              image.thumbnail || image.url || "/placeholder.svg"
+                            }
                             alt={image.name}
                             width={80}
                             height={120}
-                            className="w-full h-full object-cover select-none"
+                            className="w-full h-[85px] object-cover select-none"
                             draggable={false}
                           />
-                        </MiniMap>
-                      ) : (
-                        <Image
-                          src={
-                            image.thumbnail || image.url || "/placeholder.svg"
-                          }
-                          alt={image.name}
-                          width={80}
-                          height={120}
-                          className="w-full h-[85px] object-cover select-none"
-                          draggable={false}
-                        />
-                      )}
+                        )}
+                        
+               
                     </div>
                   ))}
                 </div>
