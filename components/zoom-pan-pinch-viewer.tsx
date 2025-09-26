@@ -183,7 +183,7 @@ export function ZoomPanPinchViewer() {
                               alt={image.name}
                               width={120}
                               height={120}
-                              className="w-full h-[85px] object-cover select-none border-4 border-[#1d4279]"
+                              className="w-full h-[85px] object-cover select-none border-3 border-[#1d4279]"
                               draggable={false}
                             />
                           ) : (
