@@ -94,6 +94,14 @@ export function ZoomPanPinchViewer() {
     [],
   );
 
+  // Center image when zoom scale returns to 1
+  useEffect(() => {
+    if (zoomScale === 1 && transformRef.current) {
+      transformRef.current.centerView();
+    }
+  }, [zoomScale]);
+
+
   // Auto-scroll to selected thumbnail
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -141,7 +149,10 @@ export function ZoomPanPinchViewer() {
           doubleClick={{ mode: "reset" }}
           limitToBounds={true}
           centerZoomedOut={true}
-          panning={{ disabled: false }}
+          panning={{ 
+            disabled: false,
+            lockAxisY: zoomScale === 1, // Khóa trục Y khi zoom scale = 1
+          }}
           onTransformed={handleTransformChange}
         >
           <TransformComponent
@@ -162,7 +173,7 @@ export function ZoomPanPinchViewer() {
 
           <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t py-2 z-10">
             <div className="max-w-4xl mx-auto">
-              <ScrollArea className="w-full rounded-md" ref={scrollAreaRef}>
+              <ScrollArea className="w-full rounded-md h-28" ref={scrollAreaRef}>
                 <div className="flex w-max space-x-4 p-4 h-full">
                   {imageGallery.map((image) => (
                     <div
