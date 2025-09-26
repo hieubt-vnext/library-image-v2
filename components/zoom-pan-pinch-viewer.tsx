@@ -100,33 +100,45 @@ export function ZoomPanPinchViewer() {
   );
 
   const handleInit = useCallback((ref: ReactZoomPanPinchRef) => {
-    // Center immediately when initialized
-    ref.centerView(undefined, 0);
-    setIsInitialized(true);
+    // Reset transform first, then center
+    ref.resetTransform(0); // Reset position and scale without animation
+    setTimeout(() => {
+      ref.centerView(undefined, 0); // Center without animation
+      setIsInitialized(true);
+    }, 50); // Small delay to ensure reset completes first
   }, []);
 
-  // Initialize and center view immediately on mount
+  // Force reset and center on mount
   useEffect(() => {
-    const initializeCenter = () => {
+    const forceResetAndCenter = () => {
       if (transformRef.current) {
-        // Force immediate center without animation
-        transformRef.current.centerView(undefined, 0);
-        setIsInitialized(true);
+        // First reset everything to initial state
+        transformRef.current.resetTransform(0);
+        // Then center after a brief delay
+        setTimeout(() => {
+          if (transformRef.current) {
+            transformRef.current.centerView(undefined, 0);
+            setIsInitialized(true);
+          }
+        }, 100);
         return true;
       }
       return false;
     };
 
-    // Try to initialize immediately
-    if (!initializeCenter()) {
-      // If not ready, try again after a short delay
+    // Reset state first
+    setIsInitialized(false);
+    
+    // Try to reset and center immediately
+    if (!forceResetAndCenter()) {
+      // If not ready, try again after a delay
       const timer = setTimeout(() => {
-        initializeCenter();
-      }, 100);
+        forceResetAndCenter();
+      }, 200);
       
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, []); // Empty dependency to run only on mount
 
   // Center image when zoom scale returns to 1 (without animation)
   useEffect(() => {
@@ -175,6 +187,8 @@ export function ZoomPanPinchViewer() {
         <TransformWrapper
           ref={transformRef}
           initialScale={1} // reset initial scale to 1 (100%)
+          initialPositionX={0} // reset initial position X
+          initialPositionY={0} // reset initial position Y
           minScale={1} // set minimum scale to 1 to prevent zooming below 100%
           maxScale={4}
           centerOnInit={true}
@@ -183,6 +197,8 @@ export function ZoomPanPinchViewer() {
           doubleClick={{ mode: "reset", animationTime: 0 }} // No animation for double click reset
           limitToBounds={true}
           centerZoomedOut={true}
+          alignmentAnimation={{ disabled: true }} // Disable alignment animation
+          velocityAnimation={{ disabled: true }} // Disable velocity animation
           panning={{ 
             disabled: false,
             lockAxisY: zoomScale === 1, // Khóa trục Y khi zoom scale = 1
