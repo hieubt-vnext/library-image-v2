@@ -7,7 +7,6 @@ import {
   MiniMap,
   type ReactZoomPanPinchRef,
 } from "react-zoom-pan-pinch";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 import Image from "next/image";
 
@@ -195,7 +194,7 @@ export function ZoomPanPinchViewer() {
       </header>
 
       {/* Main Image Viewer */}
-      <div className="relative flex-col rounded-lg max-w-4xl mx-auto w-full flex items-center justify-center flex-1 overflow-hidden pb-32 min-h-0">
+      <div className="relative flex-col rounded-lg max-w-full mx-auto w-full flex items-center justify-center flex-1 overflow-hidden pb-36 min-h-0">
         <TransformWrapper
           ref={transformRef}
           initialScale={1} // reset initial scale to 1 (100%)
@@ -223,13 +222,13 @@ export function ZoomPanPinchViewer() {
             wrapperClass={`w-full h-full flex !h-screen`}
             contentClass="w-full h-full flex items-center justify-center"
           >
-            <div className={`flex items-center justify-center w-full h-full transition-opacity duration-0 ${isInitialized ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`flex items-center justify-center w-full h-ful transition-opacity duration-0 ${isInitialized ? 'opacity-100' : 'opacity-0'}`}>
               <Image
                 src={currentImage.url || "/placeholder.svg"}
                 alt={currentImage.name}
-                width={450}
-                height={550}
-                className="w-auto h-auto object-contain select-none mb-6"
+                width={800}
+                height={600}
+                className="max-w-full max-h-full w-auto h-auto object-contain select-none"
                 draggable={false}
               />
             </div>
@@ -237,30 +236,43 @@ export function ZoomPanPinchViewer() {
 
           <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t py-2 z-10">
             <div className="max-w-4xl mx-auto">
-              <ScrollArea className="w-full rounded-md h-28" ref={scrollAreaRef}>
-                <div className="flex w-max space-x-4 p-4 h-full">
+              <div 
+                className="w-full rounded-md h-32 overflow-x-auto overflow-y-hidden scrollbar-hide" 
+                ref={scrollAreaRef}
+                style={{ 
+                  overflowY: 'hidden', 
+                  overflowX: 'auto',
+                  touchAction: 'pan-x',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
+              >
+                <div className="flex w-max space-x-4 p-4 h-full select-none">
                   {imageGallery.map((image) => (
                     <div
                       key={image.id}
                       data-image-id={image.id}
-                      className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`relative flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all select-none ${
                         currentImageId === image.id
                           ? "border-none cursor-default"
                           : "border-none  cursor-pointer"
                       }`}
                       onClick={() => handleThumbnailClick(image.id)}
+                      onDragStart={(e) => e.preventDefault()}
                     >
                       {currentImageId === image.id ? (
                         <>
                           {zoomScale === 1 ? (
-                            <Image
-                              src={image.thumbnail || image.url || "/placeholder.svg"}
-                              alt={image.name}
-                              width={120}
-                              height={120}
-                              className="w-full h-[85px] object-cover select-none border-3 border-[#1d4279]"
-                              draggable={false}
-                            />
+                            <div className="border-3 border-[#1d4279] overflow-hidden">
+                              <Image
+                                src={image.thumbnail || image.url || "/placeholder.svg"}
+                                alt={image.name}
+                                width={120}
+                                height={120}
+                                className="w-full h-[85px] object-cover select-none"
+                                draggable={false}
+                              />
+                            </div>
                           ) : (
                             <MiniMap width={200} height={85} borderColor="#1d4279">
                               <Image
@@ -286,13 +298,11 @@ export function ZoomPanPinchViewer() {
                             draggable={false}
                           />
                         )}
-                        
-               
+                      
                     </div>
                   ))}
                 </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
+              </div>
             </div>
           </div>
         </TransformWrapper>
